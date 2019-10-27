@@ -27,7 +27,7 @@ public class Watcher implements Listener {
 
     @EventHandler // Player teleports, linked to tpboom
     public boolean onTeleport(PlayerTeleportEvent evt) {
-        if (evt.getTo().getWorld() == evt.getFrom().getWorld() && evt.getTo().distance(evt.getFrom()) < 10) {
+        if (evt.getTo().getWorld() == evt.getFrom().getWorld() && evt.getTo().distance(evt.getFrom()) < 30) {
             return true;
         }
         if (Storage.vanishedPlayers.contains(evt.getPlayer())) {

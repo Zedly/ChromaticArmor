@@ -1,0 +1,25 @@
+name: ChromaticArmor
+main: zedly.chromaticarmor.ChromaticArmor
+version: 0.6.2
+api-version: 1.14
+commands:
+  chromo:
+    description: Spawns Chromatic Armor
+    usage: /chromo <type> <parameters..>
+    permission: chromaticarmor.chromo
+  trl:
+    description: Adds or removes item trails
+    usage: /trl <add/del> <Item ID>:<data?>
+    permission: chromaticarmor.trail
+permissions:
+  chromaticarmor.*:
+    description: Enables permissions for the entire ChromaticArmor plugin
+    children:
+      chromaticarmor.chromo: true
+      chromaticarmor.trail: true
+  chromaticarmor.chromo:
+    description: Allows editing or creating Chromatic Armor.
+    default: false
+  chromaticarmor.trail:
+    description: Allows editing or creating item trail chestpieces.
+    default: false
