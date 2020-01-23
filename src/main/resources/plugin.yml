@@ -1,15 +1,16 @@
 name: ChromaticArmor
 main: zedly.chromaticarmor.ChromaticArmor
-version: 0.6.2
-api-version: 1.14
+version: 0.6.3
+api-version: 1.15
+
 commands:
   chromo:
     description: Spawns Chromatic Armor
-    usage: /chromo <type> <parameters..>
+    usage: "/chromo <type> <parameters..>"
     permission: chromaticarmor.chromo
   trl:
     description: Adds or removes item trails
-    usage: /trl <add/del> <Item ID>:<data?>
+    usage: "/trl <add/del> <Item ID>:<data?>"
     permission: chromaticarmor.trail
 permissions:
   chromaticarmor.*:

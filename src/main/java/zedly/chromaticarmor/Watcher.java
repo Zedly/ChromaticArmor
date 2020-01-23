@@ -42,20 +42,6 @@ public class Watcher implements Listener {
     }
 
     @EventHandler // Stops Easter eggs from being pickef up
-    public void onItemPickup(EntityPickupItemEvent evt) {
-        if (!(evt.getEntity() instanceof Player)) {
-            return;
-        }
-        Item item = evt.getItem();
-        if (item.getItemStack().hasItemMeta() && item.getItemStack().getItemMeta().hasDisplayName()
-                && item.getItemStack().getItemMeta().getDisplayName().equals(ChatColor.MAGIC + "Transient")) {
-            // Kill items left after a crash
-            evt.setCancelled(true);
-            item.remove();
-        }
-    }
-
-    @EventHandler // Stops Easter eggs from being pickef up
     public boolean onItemPickup(InventoryPickupItemEvent evt) {
         Item item = evt.getItem();
         if (TaskItemTrails.trailItems.contains(evt.getItem())) {
@@ -88,8 +74,8 @@ public class Watcher implements Listener {
         if (evt.getSlotType().equals(RESULT)) {
             canCraft = true;
         }
-        Set<Integer> slot = new HashSet<>();
-        slot.add(evt.getSlot());
+        //Set<Integer> slot = new HashSet<>();
+        //slot.add(evt.getSlot());
 
         //CraftingGUI.craftChromo(evt.getView(), slot, (Player) evt.getWhoClicked(), canCraft);
     }
