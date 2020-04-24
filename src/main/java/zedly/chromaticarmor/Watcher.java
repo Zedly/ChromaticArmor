@@ -15,7 +15,7 @@ public class Watcher implements Listener {
 
     @EventHandler // Vanish activated
     public boolean onCommand(PlayerCommandPreprocessEvent evt) {
-        if (evt.getMessage().equals("/vanish") && evt.getPlayer().hasPermission("vanish.vanish")) {
+        if ((evt.getMessage().equals("/v") || evt.getMessage().equals("/vanish")) && evt.getPlayer().hasPermission("vanish.vanish")) {
             if (Storage.vanishedPlayers.contains(evt.getPlayer())) {
                 Storage.vanishedPlayers.remove(evt.getPlayer());
             } else {

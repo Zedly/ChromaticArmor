@@ -5,13 +5,15 @@
  */
 package zedly.chromaticarmor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import org.apache.commons.lang.ArrayUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import static org.bukkit.Material.LEATHER_BOOTS;
 import static org.bukkit.Material.LEATHER_CHESTPLATE;
 import static org.bukkit.Material.LEATHER_HELMET;
@@ -27,98 +29,117 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
  */
 public class TaskChromaticArmor implements Runnable {
 
-    private final HashMap<Integer, Integer> chromaticColorProgress = new HashMap<>();
+    private static final HighFrequencyRunnableCache CACHE = new HighFrequencyRunnableCache(TaskChromaticArmor::feedCache, 20);
+    private static final HashMap<Integer, Integer> chromaticColorProgress = new HashMap<>();
+    private static final ArrayList<Function<Player, ItemStack>> ARMOR_SLOT_GETTERS = new ArrayList<>();
+    private static final ArrayList<BiConsumer<Player, ItemStack>> ARMOR_SLOT_SETTERS = new ArrayList<>();
+    private static final Material[] ARMOR_TYPE_IDS = {Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS};
 
-    public void run() {
-        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            int entityId = player.getEntityId();
-            int counter = 0;
-            if (chromaticColorProgress.containsKey(entityId)) {
-                counter = chromaticColorProgress.get(entityId);
-            }
-            chromaticColorProgress.put(entityId, counter + 1);
-            for (ItemStack stk : player.getInventory().getArmorContents()) {
-                if (stk != null && stk.hasItemMeta() && stk.getItemMeta().hasLore()
-                        && stk.getItemMeta().getLore().size() > 1) {
-                    if (ArrayUtils.contains(Storage.leather, stk.getType())) {
-                        List<String> lore = stk.getItemMeta().getLore();
-                        if (lore.get(0).contains(ChatColor.GREEN + "Chromatic Armor") && !lore.get(0).contains("Not Configured")) {
-                            stk.setDurability((short) 0); // Chromatic armor does not wear
-                            LeatherArmorMeta meta = (LeatherArmorMeta) stk.getItemMeta();
-                            int[] color;
-                            try {
-                                //TODO: Cache this
-                                double[] params = Utilities.parseParameters(ChatColor.stripColor(lore.get(1)));
-                                if (ArrayUtils.contains(Storage.FW_COLOR_FRIENDLY_NAMES, ChatColor.stripColor(lore.get(0).toLowerCase().split(": ")[1].replace(" ", "_")))) {
-                                    color = Utilities.getThemedColor(params, counter);
-                                } else {
-                                    color = Utilities.getColor(params, counter);
-                                }
-                                if (Storage.vanishedPlayers.contains(player)) {
-                                    int i = Storage.rnd.nextInt(30);
-                                    if (Storage.rnd.nextInt(50) == 10) {
-                                        color = new int[]{255, 255, 255};
-                                    } else {
-                                        color = new int[]{Storage.rnd.nextInt(20) + 75 + i, Storage.rnd.nextInt(20) + 75 + i, Storage.rnd.nextInt(20) + 75 + i};
-                                    }
-                                }
-                                meta.setColor(Color.fromRGB(Utilities.clamp(color[0]), Utilities.clamp(color[1]), Utilities.clamp(color[2])));
-                                stk.setItemMeta(meta);
-                                switch (stk.getType()) {
-                                    case LEATHER_HELMET:
-                                        player.getInventory().setHelmet(stk);
-                                        break;
-                                    case LEATHER_CHESTPLATE:
-                                        player.getInventory().setChestplate(stk);
-                                        break;
-                                    case LEATHER_LEGGINGS:
-                                        player.getInventory().setLeggings(stk);
-                                        break;
-                                    case LEATHER_BOOTS:
-                                        player.getInventory().setBoots(stk);
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            } catch (Exception e) {
-                                lore.set(0, ChatColor.GREEN + "Chromatic Armor: " + ChatColor.GOLD + "Not Configured");
-                                lore.set(1, ChatColor.GRAY + "Not Configured");
-                                meta.setLore(lore);
-                                meta.setLore(lore);
-                                stk.setItemMeta(meta);
-                                return;
-                            }
-                            if ((player.isFlying() || player.isSprinting()) && Storage.rnd.nextBoolean() && !Storage.vanishedPlayers.contains(player)) {
-                                Location loc = player.getLocation().clone();
-                                loc.subtract(player.getLocation().getDirection());
-                                float heightAboveFeetPos = 0;
-                                switch (stk.getType()) {
-                                    case LEATHER_HELMET:
-                                        heightAboveFeetPos = 1.75f;
-                                        break;
-                                    case LEATHER_CHESTPLATE:
-                                        heightAboveFeetPos = 1.25f;
-                                        break;
-                                    case LEATHER_LEGGINGS:
-                                        heightAboveFeetPos = .83f;
-                                        break;
-                                    case LEATHER_BOOTS:
-                                        heightAboveFeetPos = .38f;
-                                        break;
-                                }
-                                loc.setY(loc.getY() + heightAboveFeetPos + (Storage.rnd.nextFloat() / 4) * (Storage.rnd.nextInt(2) * 2 - 1));
-                                loc.setX(loc.getX() + (Storage.rnd.nextFloat() / 4) * (Storage.rnd.nextInt(2) * 2 - 1));
-                                loc.setZ(loc.getZ() + (Storage.rnd.nextFloat() / 4) * (Storage.rnd.nextInt(2) * 2 - 1));
-                                Color col = Color.fromRGB(Utilities.clamp(color[0]), Utilities.clamp(color[1]), Utilities.clamp(color[2]));
-                                //ParticleEffect.REDSTONE.display(null, loc, col, 32, 0, 0, 0, 1, 1);
-                                Particle.DustOptions dustOptions = new Particle.DustOptions(col, 1);
-                                loc.getWorld().spawnParticle(Particle.REDSTONE, loc, 32, 0, 0, 0, 0, dustOptions, true);
-                            }
-                        }
-                    }
-                }
+    private static void feedCache(Player player, Consumer<Supplier<Boolean>> consoomer) {
+        if (!player.isOnline()) {
+            return;
+        }
+        for (int itemIt = 0; itemIt < 4; itemIt++) {
+            ItemStack stk = ARMOR_SLOT_GETTERS.get(itemIt).apply(player);
+            if (stk != null && stk.getType() == ARMOR_TYPE_IDS[itemIt] && ChromaticArmorDescriptor.forItem(stk) != null) {
+                int chromaSlot = itemIt;
+                consoomer.accept(() -> {
+                    return tickChroma(player, chromaSlot);
+                });
             }
         }
     }
 
+    private static boolean tickChroma(Player player, int chromaSlot) {
+        if (!player.isOnline()) {
+            return false;
+        }
+        ItemStack chromaItem = ARMOR_SLOT_GETTERS.get(chromaSlot).apply(player);
+        if (chromaItem == null || chromaItem.getType() != ARMOR_TYPE_IDS[chromaSlot]) {
+            return false;
+        }
+
+        ChromaticArmorDescriptor desc = ChromaticArmorDescriptor.forItem(chromaItem);
+
+        if (desc == null) {
+            return false;
+        }
+
+        int entityId = player.getEntityId();
+        int counter = 0;
+        if (chromaticColorProgress.containsKey(entityId)) {
+            counter = chromaticColorProgress.get(entityId);
+        }
+        chromaticColorProgress.put(entityId, counter + 1);
+
+        Color color;
+        if (Storage.vanishedPlayers.contains(player)) {
+            color = desc.calculateVanished(counter);
+        } else {
+            color = desc.calculate(counter);
+            if (Storage.rnd.nextBoolean() && (player.isFlying() || player.isSprinting())) {
+                Location loc = player.getLocation().clone();
+                loc.subtract(player.getLocation().getDirection());
+                float heightAboveFeetPos = 0;
+                switch (chromaItem.getType()) {
+                    case LEATHER_HELMET:
+                        heightAboveFeetPos = 1.75f;
+                        break;
+                    case LEATHER_CHESTPLATE:
+                        heightAboveFeetPos = 1.25f;
+                        break;
+                    case LEATHER_LEGGINGS:
+                        heightAboveFeetPos = .83f;
+                        break;
+                    case LEATHER_BOOTS:
+                        heightAboveFeetPos = .38f;
+                        break;
+                }
+                loc.setY(loc.getY() + heightAboveFeetPos + (Storage.rnd.nextFloat() / 4) * (Storage.rnd.nextInt(2) * 2 - 1));
+                loc.setX(loc.getX() + (Storage.rnd.nextFloat() / 4) * (Storage.rnd.nextInt(2) * 2 - 1));
+                loc.setZ(loc.getZ() + (Storage.rnd.nextFloat() / 4) * (Storage.rnd.nextInt(2) * 2 - 1));
+                Particle.DustOptions dustOptions = new Particle.DustOptions(color, 1);
+                loc.getWorld().spawnParticle(Particle.REDSTONE, loc, 32, 0, 0, 0, 0, dustOptions, true);
+            }
+        }
+
+        LeatherArmorMeta meta = (LeatherArmorMeta) chromaItem.getItemMeta();
+        meta.setUnbreakable(true);
+        meta.setColor(color);
+        chromaItem.setItemMeta(meta);
+        ARMOR_SLOT_SETTERS.get(chromaSlot).accept(player, chromaItem);
+        return true;
+    }
+
+    public void run() {
+        CACHE.run();
+    }
+
+    static {
+        ARMOR_SLOT_GETTERS.add((p) -> {
+            return p.getInventory().getHelmet();
+        });
+        ARMOR_SLOT_GETTERS.add((p) -> {
+            return p.getInventory().getChestplate();
+        });
+        ARMOR_SLOT_GETTERS.add((p) -> {
+            return p.getInventory().getLeggings();
+        });
+        ARMOR_SLOT_GETTERS.add((p) -> {
+            return p.getInventory().getBoots();
+        });
+
+        ARMOR_SLOT_SETTERS.add((p, is) -> {
+            p.getInventory().setHelmet(is);
+        });
+        ARMOR_SLOT_SETTERS.add((p, is) -> {
+            p.getInventory().setChestplate(is);
+        });
+        ARMOR_SLOT_SETTERS.add((p, is) -> {
+            p.getInventory().setLeggings(is);
+        });
+        ARMOR_SLOT_SETTERS.add((p, is) -> {
+            p.getInventory().setBoots(is);
+        });
+    }
 }
