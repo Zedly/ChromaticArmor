@@ -63,12 +63,7 @@ public class CommandProcessor {
                     int speed = Integer.parseInt(args[3]);
                     if (ArrayUtils.contains(Storage.FW_COLOR_FRIENDLY_NAMES, args[1].toLowerCase())) {
                         args[0] = args[1];
-                        String[] color = new String[]{":2:3:180:0.05:0.05:62:0.05:0.95:", ":0:3:7:0:0.1:30:1:0.9:", ":0:3:10:0:0.15:300:1:0.85:",
-                            ":5:3:10:0.3:0.15:200:0.7:0.85:", ":0:3:7:0:0.15:62:1:0.85:", ":0:3:25:0.1:0.15:110:0.9:0.85:", ":0:3:10:0:0.1:327:1:0.9:",
-                            ":0:3:15:0:0.1:25:0:0.45:", ":0:3:15:0:0.15:25:0:0.75:", ":0:3:15:0.05:0.05:180:0.95:0.75:", ":0:3:10:0:0.20:280:1:0.80:",
-                            ":0:3:15:0.05:0.25:240:0.95:0.75:", ":0:3:10:0.05:0.1:25:0.55:0.45:", ":0:3:15:0.05:0.1:96:0.93:0.4:", ":0:3:15:0:0.2:0:1:0.8:",
-                            ":0:3:180:0.05:0.05:180:0.15:0.15:"};
-                        str = (ChatColor.GRAY + "" + speed + color[ArrayUtils.indexOf(Storage.FW_COLOR_FRIENDLY_NAMES, args[1].toLowerCase())] + offset + ":" + offset + ":" + offset);
+                        str = (ChatColor.GRAY + "" + speed + Storage.CHROMA_PREDEFINED_CONFIGS[ArrayUtils.indexOf(Storage.FW_COLOR_FRIENDLY_NAMES, args[1].toLowerCase())] + offset + ":" + offset + ":" + offset);
                     }
                 } else {
                     player.sendMessage(Storage.logo + " <Color> <Offset [0..]> <Speed [1..]>");
@@ -144,15 +139,12 @@ public class CommandProcessor {
 
     public static void run(CommandSender sender, Command command, String commandlabel, String[] args) {
         if (!(sender instanceof Player)) {
+            sender.sendMessage(Storage.logo + " Chromatic Armor commands only make sense ingame!");
             return;
         }
+        Player player = (Player) sender;
         switch (commandlabel.toLowerCase()) {
             case "chromo": {
-                Player player = (Player) sender;
-                if (!player.hasPermission("pyro.chromo")) {
-                    player.sendMessage(Storage.logo + " You do not have permission to do this!");
-                    return;
-                }
                 if (ArrayUtils.contains(Storage.leather, player.getInventory().getItemInMainHand().getType())) {
                     if (args.length == 0) {
                         sender.sendMessage(Storage.logo + " Chromatic Armor Types: \nCustom\nGrayscale\nNormal\nPastel\nBright\nColor");
@@ -175,7 +167,9 @@ public class CommandProcessor {
                         return;
                     }
                     String config = getConfig(player, args);
-                    if (config != null) {
+                    if (config == null) {
+                        sender.sendMessage(Storage.logo + " Chromatic Armor Types: \nCustom\nGrayscale\nNormal\nPastel\nBright\nColor");
+                    } else {
                         lore.add(ChatColor.GREEN + "Chromatic Armor: " + ChatColor.GOLD + WordUtils.capitalize(args[0].replace("_", " ")));
                         lore.add(config);
                         if (player.getInventory().getItemInMainHand().getItemMeta().hasLore()) {
@@ -201,14 +195,9 @@ public class CommandProcessor {
                 break;
             }
             case "trl": {
-                if (!sender.hasPermission("pyro.trail")) {
-                    sender.sendMessage(Storage.logo + " You do not have permission to do this!");
-                    return;
-                }
-                Player player = (Player) sender;
                 Material mat = player.getInventory().getItemInMainHand().getType();
                 if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
-                    player.sendMessage(Storage.logo + " For Normal Trails: /trl add <trail>");
+                    player.sendMessage(Storage.logo + " For Normal Trails: /trl add Flower/Color/Mineral");
                     player.sendMessage(Storage.logo + " For Custom Trails: /trl add <Item ID:Data> ...");
                     break;
                 }
